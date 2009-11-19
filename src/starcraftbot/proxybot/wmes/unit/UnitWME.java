@@ -2,6 +2,7 @@ package starcraftbot.proxybot.wmes.unit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import starcraftbot.proxybot.wmes.PlayerWME;
 import starcraftbot.proxybot.wmes.UnitTypeWME;
@@ -57,13 +58,15 @@ public class UnitWME {
 	
 	private int addonID;
 
+	private int lastUpdate;
+
 	/**
 	 * Parses the unit data.
 	 */
 	public static ArrayList<UnitWME> getUnits(String unitData, HashMap<Integer, UnitTypeWME> types, 
-			int playerID, PlayerWME[] players) {
+			int playerID, PlayerWME[] players,  Map<Integer, Map<Integer, UnitWME>> unitMap, int frame) {
 		
-		ArrayList<UnitWME> units = new ArrayList<UnitWME>();		
+		ArrayList<UnitWME> units = new ArrayList<UnitWME>();
 		String[] unitDatas = unitData.split(":");
 		boolean first = true;
 		
@@ -74,27 +77,42 @@ public class UnitWME {
 			}
 			
 			String[] attributes = data.split(";");
-			UnitWME unit = new UnitWME();
+			
 			int pID = Integer.parseInt(attributes[1]);
 			int type = Integer.parseInt(attributes[2]);
+			
+			Map<Integer, UnitWME> playerUnitMap = unitMap.get(pID);
+			if (playerUnitMap == null) {
+				playerUnitMap = new HashMap<Integer, UnitWME>();
+			}
+			int unitId = Integer.parseInt(attributes[0]);
+			UnitWME unit = playerUnitMap.get(unitId);
+			
+			if (unit == null) {
+				if (pID == playerID) {
+					unit = new PlayerUnitWME();
+				}
+				else if (type == UnitType.Resource_Mineral_Field.ordinal()) {
+					unit = new MineralWME();
+				}
+				else if (type == UnitType.Resource_Vespene_Geyser.ordinal()) {
+					unit = new GeyserWME();
+				}
+				else if(pID != playerID && pID != 11 && !players[pID].isAlly()) {
+					unit = new EnemyUnitWME();
+				}
+				else if(pID != playerID && pID != 11 && players[pID].isAlly()) {
+					unit = new AllyUnitWME();
+				} else {
+					unit = new UnitWME();
+				}
+				playerUnitMap.put(unitId, unit);
+			}
 
-			if (pID == playerID) {
-				unit = new PlayerUnitWME();
-			}
-			else if (type == UnitType.Resource_Mineral_Field.ordinal()) {
-				unit = new MineralWME();
-			}
-			else if (type == UnitType.Resource_Vespene_Geyser.ordinal()) {
-				unit = new GeyserWME();
-			}
-			else if(pID != playerID && pID != 11 && !players[pID].isAlly()) {
-				unit = new EnemyUnitWME();
-			}
-			else if(pID != playerID && pID != 11 && players[pID].isAlly()) {
-				unit = new AllyUnitWME();
-			}
-
-			unit.ID = Integer.parseInt(attributes[0]);
+			
+			
+			
+			unit.ID = unitId;
 			unit.playerID = pID;
 			unit.type = types.get(type);
 			unit.x = Integer.parseInt(attributes[3]);
@@ -110,7 +128,8 @@ public class UnitWME {
 			unit.order = Integer.parseInt(attributes[13]);
 			unit.resources = Integer.parseInt(attributes[14]);			
 			unit.addonID = Integer.parseInt(attributes[15]);			
-			unit.mineCount = Integer.parseInt(attributes[16]);			
+			unit.mineCount = Integer.parseInt(attributes[16]);
+			unit.lastUpdate = frame;
 			units.add(unit);
 		}		
 

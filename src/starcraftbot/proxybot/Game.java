@@ -2,6 +2,7 @@ package starcraftbot.proxybot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import starcraftbot.proxybot.Constants.Race;
 import starcraftbot.proxybot.command.CommandQueue;
@@ -49,6 +50,9 @@ public class Game {
 
 	/** a list of the units */
 	private ArrayList<UnitWME> units;
+	
+	private Map<Integer, Map<Integer,UnitWME>> unitMap = new HashMap<Integer, Map<Integer,UnitWME>>();
+
 
 	/** StarCraft unit types */
 	private HashMap<Integer, UnitTypeWME> unitTypes = UnitTypeWME.getUnitTypeMap();
@@ -113,7 +117,8 @@ public class Game {
 	public void update(String updateData) {
 		frame++;
 		player.update(updateData);
-		units = UnitWME.getUnits(updateData, unitTypes, playerID, playerArray);
+		units = UnitWME.getUnits(updateData, unitTypes, playerID, playerArray, unitMap, frame);
+		
 		lastGameUpdate = System.currentTimeMillis();
 	}
 	
