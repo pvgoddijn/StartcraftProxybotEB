@@ -36,8 +36,6 @@ public class ProxyBot {
 
 	public static boolean showSpeedPanel = true;
 	
-	public boolean isPaussed=false;
-	
 	public static void main(String[] args) {
 		new ProxyBot().start();
 	}
